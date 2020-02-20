@@ -95,12 +95,27 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
                 continue
 
             # Get the polygon coordinates
-            polygon = text2Attributes['Polygon'][textIndex]
-            print(polygon)
+            polygon = eval(text2Attributes['Polygon'][textIndex])
+            print(polygon, type(polygon))
+
+            print("Confidence: " + str(text2Attributes['Confidence'][textIndex]))
+            color = (0,0,0)
+            if float(text2Attributes['Confidence'][textIndex]) > 85:
+                color = (0,0,255) # red
+            else:
+                color = (255, 255, 0)
+
+            print(polygon[3], type(polygon[3]))
+            startPoint = (int(polygon[3]['X']), int(polygon[3]['Y']))
+            endPoint = (int(polygon[1]['X']), int(polygon[1]['Y']))
+            print("STARTPOINT: " + str(startPoint))
+            img2 = cv2.rectangle(img2, startPoint, endPoint, color, 3)
 
         elif s[0]=='+':
             # Add (GREEN)
             print(u'Add "{}" to position {}'.format(s[-1],i))  
+
+    return img2
 
 
 def uploadImage(imageName, bucket, objectName=None):
@@ -120,12 +135,13 @@ def uploadImage(imageName, bucket, objectName=None):
     return True
 
 def main():
-    image1 = 'testImage.png'
-    image2 = 'testImage2.png'
+    image1 = 'handwrittentext.png'
+    image2 = 'editedText.jpg'
 
     # Read the images using opencv
     img1 = cv2.imread(image1, 1)
     img2 = cv2.imread(image2, 1)
+    print("SIZE: " + str(img2.shape))
 
     # S3 Bucket name
     bucket = 'writing-compare-sherwinvarkiani'
@@ -145,10 +161,14 @@ def main():
     # Use textract to get text from image
     text2Attributes = processTextDetection(bucket, document)
 
-    compareText(text1Attributes, text2Attributes, img1, img2)
+    img2 = compareText(text1Attributes, text2Attributes, img1, img2)
 
 
-    
+    cv2.imshow("Original", img1)
+    cv2.imshow("Comparison", img2)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
