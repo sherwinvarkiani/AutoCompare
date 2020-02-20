@@ -46,26 +46,58 @@ def processTextDetection(bucket, document):
     textAttributes['Polygon'] = textPolygon
     return textAttributes
 
-def compareText(text1Attributes, text2Attributes):
+def compareText(text1Attributes, text2Attributes, img1, img2):
     print("Comparing Texts")
     text1 = ""
+    text1indices = []
     text2 = ""
+    text2indices = []
 
     text1List = text1Attributes['Text']
     text2List = text2Attributes['Text']
-    
+
     # Get all of the text
     for t in text1List:
         text1 += t + " "
 
+        # Set up the corresponding indices for the words in the text
+        for index in range(0,len(t)):
+            text1indices.append(text1List.index(t))
+        text1indices += " "
+
     for t in text2List:
         text2 += t + " "
+
+        # Set up the corresponding indices for the words in the text
+        for index in range(0,len(t)):
+            text2indices.append(text2List.index(t))
+        text2indices += " "
     
-    for i,s in enumerate(difflib.ndiff(text1,text2)):
+    print("text1: " + str(text1))
+    print("text2: " + str(text2))
+
+    if len(text1indices) != len(text1) or len(text2indices) != len(text2):
+        print("ERROR INDEX LENGTHS NOT EQUAL")
+        print(len(text1indices), len(text1))
+        print(len(text2indices), len(text2))
+
+    for i,s in enumerate(difflib.ndiff(text2,text1)):
         if s[0] == ' ': continue
         elif s[0] == '-':
             # Delete (RED)
             print(u'Delete "{}" from position {}'.format(s[-1],i))
+
+            # Get the index and cast it to int
+            index = text2indices[i]
+            if index != ' ':
+                textIndex = int(index)
+            else:
+                continue
+
+            # Get the polygon coordinates
+            polygon = text2Attributes['Polygon'][textIndex]
+            print(polygon)
+
         elif s[0]=='+':
             # Add (GREEN)
             print(u'Add "{}" to position {}'.format(s[-1],i))  
@@ -88,8 +120,8 @@ def uploadImage(imageName, bucket, objectName=None):
     return True
 
 def main():
-    image1 = 'handwrittentext.png'
-    image2 = 'image2.jpg'
+    image1 = 'testImage.png'
+    image2 = 'testImage2.png'
 
     # Read the images using opencv
     img1 = cv2.imread(image1, 1)
@@ -104,7 +136,7 @@ def main():
 
     # Use textract to get text from image
     text1Attributes = processTextDetection(bucket, document)
-    print(text1Attributes)
+    # print(text1Attributes)
 
     # # Upload the image to the bucket
     uploadImage(image2, bucket)
@@ -112,6 +144,8 @@ def main():
 
     # Use textract to get text from image
     text2Attributes = processTextDetection(bucket, document)
+
+    compareText(text1Attributes, text2Attributes, img1, img2)
 
 
     
