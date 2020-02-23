@@ -72,23 +72,21 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
         for index in range(0,len(t)):
             text2indices.append(text2List.index(t))
         text2indices += " "
-    
-    print("text1: " + str(text1))
-    print("text2: " + str(text2))
+
 
     if len(text1indices) != len(text1) or len(text2indices) != len(text2):
         print("ERROR INDEX LENGTHS NOT EQUAL")
         print(len(text1indices), len(text1))
         print(len(text2indices), len(text2))
 
+    # Difference checker
+    counter = 0
     for i,s in enumerate(difflib.ndiff(text2,text1)):
         if s[0] == ' ': continue
-        elif s[0] == '-':
-            # Delete (RED)
-            print(u'Delete "{}" from position {}'.format(s[-1],i))
+        else:
 
             # Get the index and cast it to int
-            index = text2indices[i]
+            index = text2indices[i-counter]
             if index != ' ':
                 textIndex = int(index)
             else:
@@ -96,30 +94,50 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
 
             # Get the polygon coordinates
             polygon = eval(text2Attributes['Polygon'][textIndex])
-            print(polygon, type(polygon))
+            # print(polygon, type(polygon))
 
-            print("Confidence: " + str(text2Attributes['Confidence'][textIndex]))
+            # print("Confidence: " + str(text2Attributes['Confidence'][textIndex]))
             color = (0,0,0)
-            if float(text2Attributes['Confidence'][textIndex]) > 85:
-                color = (0,0,255) # red
-            else:
-                color = (255, 255, 0)
+            thickness = 3
+            if s[0]=='-':
+                # Delete (RED)
+                counter += 1
+                print(u'Delete "{}" from position {}'.format(s[-1],i-counter))
 
-            print(polygon[3], type(polygon[3]))
+                # update text index
+                del text2indices[i-counter]
+
+                if float(text2Attributes['Confidence'][textIndex]) > 85:
+                    color = (0,0,255) # red
+                    thickness = 7
+                else:
+                    color = (255, 0, 255)
+            elif s[0]=='+':
+
+                print(u'Add "{}" to position {}'.format(s[-1],i-counter))  
+
+                text2indices.insert(i-counter, textIndex)
+
+                if float(text2Attributes['Confidence'][textIndex]) > 85:
+                    color = (0,255,0) # green
+                else:
+                    color = (255, 255, 0)
+
+            # print(polygon[3], type(polygon[3]))
 
             # Get the image height and width
             height, width, _ = img2.shape
 
             startPoint = (np.float32(polygon[3]['X'] * width), np.float32(polygon[3]['Y'] * height))
             endPoint = (np.float32(polygon[1]['X'] * width), np.float32(polygon[1]['Y'] * height))
-            print("STARTPOINT: " + str(startPoint))
-            print("ENDPOINT: " + str(endPoint))
-            img2 = cv2.rectangle(img2, startPoint, endPoint, color, 3)
+            # print("STARTPOINT: " + str(startPoint))
+            # print("ENDPOINT: " + str(endPoint))
+            img2 = cv2.rectangle(img2, startPoint, endPoint, color, thickness)
 
-        elif s[0]=='+':
-            # Add (GREEN)
-            print(u'Add "{}" to position {}'.format(s[-1],i))  
 
+    print("text1: " + str(text1))
+    print("text2: " + str(text2))
+    print("texta: " + str(text2indices))
     return img2
 
 
@@ -147,6 +165,8 @@ def main():
     img1 = cv2.imread(image1, 1)
     img2 = cv2.imread(image2, 1)
     print("SIZE: " + str(img2.shape))
+    img1 = cv2.resize(img1, (0,0), fx=0.5, fy=0.5)
+    img2 = cv2.resize(img2, (0,0), fx=0.5, fy=0.5)
 
     # S3 Bucket name
     bucket = 'writing-compare-sherwinvarkiani'
