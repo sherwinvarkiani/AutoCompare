@@ -106,9 +106,14 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
                 color = (255, 255, 0)
 
             print(polygon[3], type(polygon[3]))
-            startPoint = (int(polygon[3]['X']), int(polygon[3]['Y']))
-            endPoint = (int(polygon[1]['X']), int(polygon[1]['Y']))
+
+            # Get the image height and width
+            height, width, _ = img2.shape
+
+            startPoint = (np.float32(polygon[3]['X'] * width), np.float32(polygon[3]['Y'] * height))
+            endPoint = (np.float32(polygon[1]['X'] * width), np.float32(polygon[1]['Y'] * height))
             print("STARTPOINT: " + str(startPoint))
+            print("ENDPOINT: " + str(endPoint))
             img2 = cv2.rectangle(img2, startPoint, endPoint, color, 3)
 
         elif s[0]=='+':
