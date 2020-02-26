@@ -99,6 +99,7 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
             # print("Confidence: " + str(text2Attributes['Confidence'][textIndex]))
             color = (0,0,0)
             thickness = 3
+            adjust = 0
             if s[0]=='-':
                 # Delete (RED)
                 counter += 1
@@ -107,9 +108,9 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
                 # update text index
                 del text2indices[i-counter]
 
-                if float(text2Attributes['Confidence'][textIndex]) > 85:
+                if float(text2Attributes['Confidence'][textIndex]) > 90:
                     color = (0,0,255) # red
-                    thickness = 7
+                    thickness = 3
                 else:
                     color = (255, 0, 255)
             elif s[0]=='+':
@@ -117,8 +118,9 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
                 print(u'Add "{}" to position {}'.format(s[-1],i-counter))  
 
                 text2indices.insert(i-counter, textIndex)
+                adjust = 5
 
-                if float(text2Attributes['Confidence'][textIndex]) > 85:
+                if float(text2Attributes['Confidence'][textIndex]) > 90:
                     color = (0,255,0) # green
                 else:
                     color = (255, 255, 0)
@@ -128,8 +130,9 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
             # Get the image height and width
             height, width, _ = img2.shape
 
-            startPoint = (np.float32(polygon[3]['X'] * width), np.float32(polygon[3]['Y'] * height))
-            endPoint = (np.float32(polygon[1]['X'] * width), np.float32(polygon[1]['Y'] * height))
+
+            startPoint = (np.float32(polygon[3]['X'] * width + adjust), np.float32(polygon[3]['Y'] * height - adjust))
+            endPoint = (np.float32(polygon[1]['X'] * width - adjust), np.float32(polygon[1]['Y'] * height + adjust))
             # print("STARTPOINT: " + str(startPoint))
             # print("ENDPOINT: " + str(endPoint))
             img2 = cv2.rectangle(img2, startPoint, endPoint, color, thickness)
@@ -137,7 +140,7 @@ def compareText(text1Attributes, text2Attributes, img1, img2):
 
     print("text1: " + str(text1))
     print("text2: " + str(text2))
-    print("texta: " + str(text2indices))
+    print("Confidence: " + str(text2Attributes['Confidence'][1]))
     return img2
 
 
